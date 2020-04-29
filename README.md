@@ -1,0 +1,1 @@
+# badge_cate2_rank
