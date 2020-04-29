@@ -1,4 +1,4 @@
-# Authorized : cho.by@gsshop.com
+# Authorized : cho.by@***.com
 # Description :
 
 import pyspark
@@ -15,7 +15,7 @@ sqlContext = HiveContext(sc)
 
 yesterday = (date.today() - timedelta(days=1)).strftime('%Y%m%d')
 
-uv_df = sqlContext.sql("select dt, siteid, if(userid != '', userid, pcid) as userid, parse_url(currenturl, 'PATH') as path, parse_url(currenturl,'QUERY','sectSeq') as sectSeq from wcs_onload ").filter(col('path').like('/section/groupSectM%')).filter(col('siteid') =='gsshopMobile').filter(col('dt') == yesterday).filter((col('userid') != '') & col('sectSeq').isNotNull())
+uv_df = sqlContext.sql("select dt, siteid, if(userid != '', userid, pcid) as userid, parse_url(currenturl, 'PATH') as path, parse_url(currenturl,'QUERY','sectSeq') as sectSeq from wcs_onload ").filter(col('path').like('/section/groupSectM%')).filter(col('siteid') =='Mobile').filter(col('dt') == yesterday).filter((col('userid') != '') & col('sectSeq').isNotNull())
 split_col = split(uv_df['sectSeq'], '-')
 uv_df = uv_df.withColumn('lsect', trim(split_col.getItem(0)))
 uv_df = uv_df.withColumn('letter', trim(split_col.getItem(1)))
@@ -23,7 +23,7 @@ uv_df = uv_df.withColumn('msect', trim(split_col.getItem(2)))
 uv_df = uv_df.filter(col('letter') == 'A')
 uv_df = uv_df.select(['lsect', 'msect', 'userid']).groupby(['lsect', 'msect']).agg(countDistinct('userid').alias('uv'))
 
-tmp_view_df = sqlContext.sql("select dt, siteid, if(userid != '', userid, pcid) as userid, itemid, visitedtime, parse_url(currenturl, 'QUERY', 'gsid') as gsid, parse_url(currenturl, 'QUERY', 'sectSeq') as sectseq from user_item_view ").filter(col('gsid') == 'cateshop-mresult').filter(col('siteid') == 'gsshopMobile').filter(col('dt') == yesterday).filter((col('userid') != '') & col('sectSeq').isNotNull())
+tmp_view_df = sqlContext.sql("select dt, siteid, if(userid != '', userid, pcid) as userid, itemid, visitedtime, parse_url(currenturl, 'QUERY', 'gsid') as gsid, parse_url(currenturl, 'QUERY', 'sectSeq') as sectseq from user_item_view ").filter(col('gsid') == 'cateshop-mresult').filter(col('siteid') == 'Mobile').filter(col('dt') == yesterday).filter((col('userid') != '') & col('sectSeq').isNotNull())
 split_col = split(tmp_view_df['sectSeq'], '-')
 tmp_view_df = tmp_view_df.withColumn('msect', trim(split_col.getItem(0)))
 tmp_view_df = tmp_view_df.withColumn('l1', trim(split_col.getItem(1)))
@@ -32,7 +32,7 @@ clk_uv_df = tmp_view_df.groupby('msect').agg(countDistinct('userid').alias('clk_
 
 
 tmp_view_df = tmp_view_df.groupby(['msect','userid','itemid']).agg(min('visitedtime').alias('min_visitedtime'))
-tmp_order_df = sqlContext.sql("select dt, siteid, if(userid != '', userid, pcid) as o_userid, prdid as o_prdid, price as o_price, visitedtime as o_visitedtime from user_item_order ").filter(col('siteid') == 'gsshopMobile').filter(col('dt') == yesterday)
+tmp_order_df = sqlContext.sql("select dt, siteid, if(userid != '', userid, pcid) as o_userid, prdid as o_prdid, price as o_price, visitedtime as o_visitedtime from user_item_order ").filter(col('siteid') == 'Mobile').filter(col('dt') == yesterday)
 cond = [tmp_view_df.userid == tmp_order_df.o_userid, tmp_view_df.itemid == tmp_order_df.o_prdid, tmp_view_df.min_visitedtime < tmp_order_df.o_visitedtime]
 ord_uv_df = tmp_view_df.join(tmp_order_df, cond, 'left_outer').filter(col('o_userid').isNotNull())
 ord_uv_df = ord_uv_df.select(['msect','userid','itemid', 'o_price']).groupby('msect').agg(countDistinct('userid').alias('ord_uv'), sum('o_price').alias('tot_price') )
